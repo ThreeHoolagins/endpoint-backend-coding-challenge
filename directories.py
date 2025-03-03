@@ -1,7 +1,7 @@
 import sys
 from enum import Enum
-import time
 
+# Enum for reuse and extendability. Really just to prevent dev skill issues and make changes values easier, if need be.
 class commands(str, Enum):
     Create = "CREATE"
     Move = "MOVE"
@@ -9,29 +9,39 @@ class commands(str, Enum):
     List = "LIST"
     Exit = "exit"
 
+# Using a tree structor for our,,, file tree.
 class virtualFileTree:
+    # This is a brute force solution, and in a real system we'd either want to keep track of a parent, and when an object has no parent it's the root,
+    # or use reserved characters that only this can use. For this example, I used characters that are marked in windows as not acceptable for filenames.
     ROOT_DIR_TAG = "><"
     
     # adding children so more complex trees can be created to start with
     def __init__(self, folderName, children):
         self.name = folderName
-        # this is a list. This makes my life hard, but I'm too deep now to convert it to a dictionary
+        # Keeping children as a list. I thought about converting it to a dictionary to make insertion and retreval times
+        # better, however the list operation becomes more complicated. Since this is a file system application, it is unlikely
+        # that rapid performance for thousands of folders would be nessisary. This could be revised though.
         self.children = children
         pass
     
+    # Add child is O(n), where N is the number of children of self. This is because we sort on insertion, instead of on print.
+    # There is a design case for where we'd prefer inserion to be quicker than print.
     def addChild(self, child):
         self.children.append(child)
-        # mantaining sorted order so we don't re-sort on print
+        # mantaining sorted order so we don't re-sort on print.
         self.children.sort(key=lambda child : child.name)
         
+    # O(n), as we loop through the list. Using a dict or hashmap/set could make this O(1)
     def hasChild(self, childName):
         return len([child for child in self.children if child.name == childName]) > 0
     
+    # O(n). We could make this faster, but we'd need a dict/hashmap/hashset
     def getChild(self, childName):
         for child in self.children:
             if child.name == childName:
                 return child
     
+    # O(n). We could make this faster, but we'd need a dict/hashmap/hashset
     def removeChild(self, childName):
         self.children = [child for child in self.children if child.name != childName]
     
@@ -115,36 +125,31 @@ def executeCommand(fileTree, command):
                         print(f"Cannot delete {commandArgs[1]} - {pathSection} does not exist")
                         break
             case commands.List:
-                #this is a depth first search
+                #this is a depth first pre-order search, in print form.
                 depthFirstPrint(fileTree)
             case _ :
                 print(f"{command[0]} Invalid command, exiting...")
                 exit(1)
 
-# todo: fix bad name omegalol
-def main():
-    print("Running with stdin")
-    #todo: print out how to exit
-    lastInput = ""
+def executeFileSystemCommandsFromUser():
+    print("Running with stdin.\nCommands will all be executed after exit command has been given.")
     commandList = []
     while True:
         command = input()
+        # This is here instead of in the isValidCommand, because of control flow.
         if command.split(" ")[0] == commands.Exit:
             break
-        if isValidCommand(lastInput):
-            commandList.append()
+        if isValidCommand(command):
+            commandList.append(command)
         else:
-            print("Invalid Command. Try from list: (CREATE, MOVE, DELETE, LIST)")
-            
-        print("User entered: " + lastInput)
-        
+            print("Invalid Command. Try from list: (CREATE, MOVE, DELETE, LIST, exit)")
+
+    print("\nExecuting now...\n\n")
     fileTree = virtualFileTree(virtualFileTree.ROOT_DIR_TAG, [])
     for command in commandList:
         executeCommand(fileTree, command)
-    # give output
 
-#todo make better name
-def mainWithFile(filePath):
+def executeFileSystemCommandListFromFile(filePath):
     print(f"doing directorties with {filePath}")
     readFile = open(filePath, "r")
     commandList = []
@@ -155,19 +160,15 @@ def mainWithFile(filePath):
         else:
             print("File not properly formatted. Please only include valid commands (CREATE, MOVE, DELETE, LIST) and do not have any spare lines")
             exit(1)
-            
+
     fileTree = virtualFileTree(virtualFileTree.ROOT_DIR_TAG, [])
     for command in commandList:
         executeCommand(fileTree, command)
 
-
-
 if __name__ == "__main__":
     match len(sys.argv):
+        # run with stdin
         case 1:
-            # run with stdin
-            main()
+            executeFileSystemCommandsFromUser()
         case 2:
-            # run with  file
-            mainWithFile(sys.argv[1])
-        
+            executeFileSystemCommandListFromFile(sys.argv[1])

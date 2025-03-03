@@ -1,0 +1,23 @@
+CREATE fruits
+CREATE vegetables
+CREATE grains
+CREATE fruits/apples
+CREATE fruits/apples/fuji
+CREATE fruits/apples/granny
+CREATE fruits/apples/honeycomb
+CREATE fruits/apples/rice
+CREATE fruits/apples/jasmin
+LIST
+CREATE grains/squash
+MOVE grains/squash vegetables
+MOVE fruits/apples/jasmin fruits/apples/rice
+MOVE fruits/apples/rice grains
+LIST
+CREATE foods
+MOVE grains foods
+MOVE fruits foods
+MOVE vegetables foods
+LIST
+DELETE fruits/apples
+DELETE foods/fruits/apples
+LIST
